@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BladeBets | Official BetDice Leaderboard & Rewards</title>
+  
+  <!-- Google Fonts & FontAwesome CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    :root {
+      --primary-gold: #FFD000;
+      --primary-gold-glow: rgba(255, 208, 0, 0.45);
+      --red-alert: #FF2E55;
+      --red-glow: rgba(255, 46, 85, 0.5);
+      --bg-dark: #08080c;
+      --bg-card: #12121a;
+      --glass-bg: rgba(18, 18, 26, 0.82);
+      --glass-border: rgba(255, 208, 0, 0.2);
+      --text-white: #ffffff;
+      --text-gray: #a3a3bd;
+      --font-heading: 'Teko', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      line-height: 1.6;
+      position: relative;
+    }
+
+    /* Floating Slot/Candy Scatters Background Canvas */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--primary-gold); border-radius: 4px; }
+
+    .container { max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+    section { padding: 80px 0; position: relative; }
+
+    h1, h2, h3 {
+      font-family: var(--font-heading);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .section-title { font-size: 3.2rem; text-align: center; margin-bottom: 5px; line-height: 1; }
+    .section-title span { color: var(--primary-gold); text-shadow: 0 0 20px var(--primary-gold-glow); }
+    .section-subtitle { text-align: center; color: var(--text-gray); margin-bottom: 50px; font-size: 1rem; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 12px 28px; font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700;
+      text-decoration: none; border-radius: 8px; cursor: pointer; transition: var(--transition);
+      border: none; text-transform: uppercase; position: relative; overflow: hidden;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #FFD000 0%, #d4ac00 100%);
+      color: #000;
+      box-shadow: 0 0 20px var(--primary-gold-glow);
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: linear-gradient(60deg, transparent, rgba(255,255,255,0.4), transparent);
+      transform: rotate(30deg) translateY(-100%);
+      transition: all 0.6s ease;
+    }
+    .btn-primary:hover::after { transform: rotate(30deg) translateY(100%); }
+    .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 0 30px rgba(255, 208, 0, 0.8); }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-white);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 208, 0, 0.1);
+      border-color: var(--primary-gold);
+      color: var(--primary-gold);
+      transform: translateY(-3px);
+      box-shadow: 0 0 20px var(--primary-gold-glow);
+    }
+
+    /* GLASS CARDS WITH SHIMMER */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+      transition: 0.5s;
+    }
+    .glass-card:hover::before { left: 100%; }
+
+    /* REVEAL ANIMATIONS */
+    .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s ease-out; }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+
+    /* NAVBAR */
+    .navbar {
+      position: sticky; top: 0; left: 0; width: 100%; z-index: 1000;
+      padding: 12px 0; background: rgba(8, 8, 12, 0.92);
+      backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border);
+    }
+    .navbar .container { display: flex; align-items: center; justify-content: space-between; }
+    .logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-img { height: 46px; width: auto; border-radius: 8px; border: 1px solid var(--glass-border); }
+    .logo-text { font-family: var(--font-heading); font-size: 2.2rem; font-weight: 700; color: var(--text-white); }
+    .logo-text span { color: var(--primary-gold); }
+
+    .nav-age-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      background: linear-gradient(135deg, rgba(255, 46, 85, 0.2), rgba(255, 0, 0, 0.05));
+      border: 1.5px solid var(--red-alert);
+      border-radius: 20px;
+      color: #ff4d6d;
+      font-weight: 800;
+      font-size: 0.88rem;
+      box-shadow: 0 0 12px var(--red-glow);
+      animation: pulseRed 2.5s infinite;
+    }
+    @keyframes pulseRed {
+      0%, 100% { box-shadow: 0 0 8px var(--red-glow); transform: scale(1); }
+      50% { box-shadow: 0 0 18px var(--red-glow); transform: scale(1.05); }
+    }
+
+    .nav-links { display: flex; list-style: none; gap: 28px; align-items: center; }
+    .nav-links a { color: var(--text-white); text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: var(--transition); }
+    .nav-links a:hover, .nav-links a.active { color: var(--primary-gold); }
+    .hamburger { display: none; font-size: 1.5rem; color: var(--text-white); cursor: pointer; }
+
+    /* HERO */
+    .hero {
+      min-height: 80vh; padding-top: 40px; display: flex; align-items: center;
+      background: radial-gradient(circle at 30% 40%, rgba(255, 208, 0, 0.08) 0%, transparent 60%);
+    }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+    .hero-content h1 { font-size: 4.8rem; line-height: 0.92; margin-bottom: 20px; }
+    .hero-content h1 span { color: var(--primary-gold); text-shadow: 0 0 25px var(--primary-gold-glow); }
+    .hero-content p { font-size: 1.1rem; color: var(--text-gray); margin-bottom: 30px; max-width: 520px; }
+    .hero-buttons { display: flex; gap: 15px; flex-wrap: wrap; }
+    .hero-banner-box { padding: 12px; border: 1px solid var(--primary-gold); box-shadow: 0 0 35px var(--primary-gold-glow); border-radius: 16px; animation: floatAnim 4s ease-in-out infinite; }
+    @keyframes floatAnim {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .hero-banner-img { width: 100%; height: auto; border-radius: 10px; display: block; }
+
+    /* CASINOS */
+    .casinos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+    .casino-card { padding: 25px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; gap: 15px; }
+    .casino-card:hover { transform: translateY(-8px); border-color: var(--primary-gold); box-shadow: 0 10px 30px var(--primary-gold-glow); }
+    .casino-banner-img { width: 100%; height: auto; max-height: 380px; object-fit: contain; border-radius: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.4); }
+
+    /* BONUSES & REWARDS */
+    .bonuses-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; margin-bottom: 40px; }
+    .bonus-card { padding: 28px; display: flex; flex-direction: column; justify-content: space-between; }
+    .bonus-card h3 { font-size: 2rem; color: var(--primary-gold); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .bonus-list { list-style: none; margin-bottom: 20px; }
+    .bonus-list li { padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.95rem; }
+    .bonus-list li strong { color: var(--text-white); }
+
+    .wager-milestones-container { padding: 35px; border: 1px solid var(--glass-border); }
+    .wager-milestones-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 25px 0; }
+    .milestone-box {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px; padding: 18px; text-align: center;
+      transition: var(--transition);
+    }
+    .milestone-box:hover { border-color: var(--primary-gold); transform: translateY(-5px); box-shadow: 0 0 15px var(--primary-gold-glow); }
+    .milestone-wager { font-family: var(--font-heading); font-size: 1.7rem; color: var(--text-white); line-height: 1; }
+    .milestone-prize { font-size: 1.25rem; font-weight: bold; color: var(--primary-gold); margin-top: 6px; }
+    .disclaimer-box { background: rgba(255, 208, 0, 0.08); border-left: 4px solid var(--primary-gold); padding: 14px 20px; border-radius: 6px; font-size: 0.9rem; color: var(--text-gray); }
+
+    /* LEADERBOARD & TIMER STYLES */
+    .leaderboard-banner-box { width: 100%; margin-bottom: 30px; border-radius: 14px; overflow: hidden; border: 1px solid var(--primary-gold); box-shadow: 0 0 25px var(--primary-gold-glow); }
+    .leaderboard-banner-img { width: 100%; height: auto; display: block; }
+
+    /* COUNTDOWN TIMER BOX */
+    .timer-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      background: rgba(255, 208, 0, 0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 15px 25px;
+      margin-bottom: 25px;
+    }
+    .timer-title {
+      font-family: var(--font-heading);
+      font-size: 1.6rem;
+      color: var(--primary-gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .timer-boxes {
+      display: flex;
+      gap: 10px;
+    }
+    .timer-unit {
+      background: #000;
+      border: 1px solid var(--primary-gold);
+      border-radius: 8px;
+      padding: 6px 12px;
+      text-align: center;
+      min-width: 55px;
+      box-shadow: 0 0 10px rgba(255, 208, 0, 0.2);
+    }
+    .timer-unit .num {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--text-white);
+      line-height: 1;
+    }
+    .timer-unit .label {
+      font-size: 0.65rem;
+      color: var(--text-gray);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .leaderboard-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; gap: 20px; flex-wrap: wrap; }
+    .single-tab {
+      background: linear-gradient(135deg, #FFD000, #c49f00); color: #000; border: none;
+      padding: 12px 28px; border-radius: 30px; font-family: var(--font-heading); font-size: 1.35rem; font-weight: bold;
+      box-shadow: 0 0 20px var(--primary-gold-glow); display: flex; align-items: center; gap: 10px;
+    }
+    .search-box { position: relative; width: 100%; max-width: 350px; }
+    .search-box input {
+      width: 100%; padding: 12px 20px 12px 45px; background: var(--bg-card);
+      border: 1px solid var(--glass-border); border-radius: 30px; color: var(--text-white); outline: none; transition: var(--transition);
+    }
+    .search-box input:focus { border-color: var(--primary-gold); box-shadow: 0 0 15px var(--primary-gold-glow); }
+    .search-box i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-gray); }
+
+    .table-container { overflow-x: auto; border-radius: 14px; }
+    .leaderboard-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .leaderboard-table th {
+      background: rgba(255, 208, 0, 0.12); padding: 18px 22px; color: var(--primary-gold);
+      font-family: var(--font-heading); font-size: 1.35rem; border-bottom: 2px solid var(--glass-border);
+    }
+    .leaderboard-table td { padding: 16px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); vertical-align: middle; transition: var(--transition); }
+    .leaderboard-table tbody tr:hover td { background: rgba(255, 208, 0, 0.05); }
+
+    .rank { font-family: var(--font-heading); font-size: 1.5rem; font-weight: bold; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .rank-1 { background: linear-gradient(135deg, #FFD700, #b39700); color: #000; box-shadow: 0 0 15px rgba(255,215,0,0.6); }
+    .rank-2 { background: linear-gradient(135deg, #E0E0E0, #8a8a8a); color: #000; box-shadow: 0 0 10px rgba(224,224,224,0.4); }
+    .rank-3 { background: linear-gradient(135deg, #CD7F32, #7a4718); color: #fff; box-shadow: 0 0 10px rgba(205,127,50,0.4); }
+    .rank-other { color: var(--text-gray); }
+
+    .user-cell { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+    .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: #252533; display: flex; align-items: center; justify-content: center; color: var(--primary-gold); font-weight: bold; border: 1px solid var(--glass-border); }
+    .amount { font-weight: 700; color: var(--primary-gold); }
+    .prize-tag { background: rgba(255, 208, 0, 0.15); color: var(--primary-gold); padding: 5px 14px; border-radius: 20px; font-size: 0.88rem; font-weight: 700; border: 1px solid var(--glass-border); }
+
+    /* STATS & CONTACT */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 40px; }
+    .stat-card { padding: 35px 20px; text-align: center; }
+    .stat-card:hover { transform: translateY(-6px); border-color: var(--primary-gold); }
+    .stat-card i { font-size: 2.8rem; color: var(--primary-gold); margin-bottom: 12px; }
+    .stat-number { font-family: var(--font-heading); font-size: 3.8rem; font-weight: 700; line-height: 1; margin-bottom: 5px; }
+    .stat-label { color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-top: 30px; }
+    .contact-card { padding: 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+    .contact-card:hover { transform: translateY(-6px); border-color: var(--primary-gold); box-shadow: 0 0 25px var(--primary-gold-glow); }
+    .contact-card i { font-size: 3rem; color: var(--primary-gold); margin-bottom: 5px; }
+    .contact-card h3 { font-size: 1.8rem; }
+    .contact-card span { font-weight: 600; color: var(--text-white); font-size: 1.05rem; background: rgba(255, 208, 0, 0.1); padding: 6px 18px; border-radius: 20px; border: 1px solid var(--glass-border); }
+
+    /* FOOTER */
+    footer { background: #050508; border-top: 1px solid var(--glass-border); padding: 60px 0 35px; text-align: center; }
+    .footer-content { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-bottom: 35px; }
+    .social-links { display: flex; gap: 20px; }
+    .social-icon { width: 48px; height: 48px; background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-white); font-size: 1.3rem; text-decoration: none; transition: var(--transition); }
+    .social-icon:hover { background: var(--primary-gold); color: #000; transform: translateY(-5px); box-shadow: 0 0 20px var(--primary-gold-glow); }
+    
+    .gambling-warning-box {
+      background: linear-gradient(180deg, rgba(20, 10, 15, 0.95) 0%, rgba(12, 12, 18, 0.95) 100%);
+      border: 2px solid var(--red-alert);
+      border-radius: 16px;
+      padding: 30px;
+      margin: 25px auto 35px;
+      max-width: 950px;
+      box-shadow: 0 0 30px rgba(255, 46, 85, 0.25);
+      position: relative;
+    }
+
+    .badge-18-glow {
+      width: 70px;
+      height: 70px;
+      margin: -60px auto 15px;
+      background: #110005;
+      border: 3px solid var(--red-alert);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ff3366;
+      font-family: var(--font-heading);
+      font-size: 2.2rem;
+      font-weight: bold;
+      box-shadow: 0 0 25px var(--red-glow);
+    }
+
+    .gambling-warning-title {
+      color: #ff4d6d;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .gambling-warning-text {
+      color: var(--text-gray);
+      font-size: 0.92rem;
+      line-height: 1.7;
+      margin-bottom: 22px;
+    }
+    .gambling-links {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .gambling-link-btn {
+      color: var(--text-white);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      padding: 10px 22px;
+      border-radius: 25px;
+      font-size: 0.88rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .gambling-link-btn:hover {
+      background: var(--primary-gold);
+      color: #000;
+      border-color: var(--primary-gold);
+      box-shadow: 0 0 15px var(--primary-gold-glow);
+    }
+
+    .copyright { color: var(--text-gray); font-size: 0.88rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 25px; width: 100%; }
+
+    @media (max-width: 992px) {
+      .hero-grid { grid-template-columns: 1fr; text-align: center; }
+      .hero-content p { margin: 0 auto 30px; }
+      .hero-buttons { justify-content: center; }
+      .hero-content h1 { font-size: 3.8rem; }
+    }
+    @media (max-width: 768px) {
+      .hamburger { display: block; }
+      .nav-links {
+        position: fixed; top: 70px; left: -100%; width: 100%; height: calc(100vh - 70px);
+        background: rgba(8, 8, 12, 0.98); backdrop-filter: blur(25px);
+        flex-direction: column; align-items: center; justify-content: center; gap: 35px; transition: var(--transition);
+      }
+      .nav-links.active { left: 0; }
+      .hero-content h1 { font-size: 3.2rem; }
+      .section-title { font-size: 2.4rem; }
+      .timer-container { flex-direction: column; }
+      .leaderboard-controls { flex-direction: column; align-items: stretch; }
+      .search-box { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CANDY & SLOTS SCATTER BACKGROUND CANVAS -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="#" class="logo-container">
+        <img src="https://images-ext-1.discordapp.net/external/pp68phiyB4pMv-hl2GXxL8W8bp2ojKrhCLF-hsdLWEs/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1512138928117780605/51e35d96bdbc2da3b53fb6c102647f67.png?format=webp&quality=lossless&width=282&height=282" alt="BladeBets Logo" class="logo-img" />
+        <div class="logo-text">BLADE<span>BETS</span></div>
+      </a>
+      
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#hero" class="active">Home</a></li>
+        <li><a href="#casinos">Casinos</a></li>
+        <li><a href="#bonuses">Bonuses</a></li>
+        <li><a href="#leaderboards">Leaderboard</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li>
+          <div class="nav-age-badge">
+            <i class="fa-solid fa-shield-halved"></i> 18+ ONLY
+          </div>
+        </li>
+      </ul>
+      <div class="hamburger" id="hamburger"><i class="fas fa-bars"></i></div>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section id="hero" class="hero">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content reveal">
+          <h1>DOMINATE THE <span>LEADERBOARD</span></h1>
+          <p>Welcome to the official BladeBets community platform. Use code <strong>BLADE</strong> on partner casinos to earn leaderboard points and win exclusive cash prizes!</p>
+          <div class="hero-buttons">
+            <a href="#leaderboards" class="btn btn-primary"><i class="fas fa-trophy"></i> View Leaderboard</a>
+            <a href="https://kick.com/bladebets" target="_blank" class="btn btn-secondary"><i class="fa-solid fa-play"></i> Watch Live on Kick</a>
+          </div>
+        </div>
+        <div class="hero-banner-box glass-card reveal">
+          <img src="https://images-ext-1.discordapp.net/external/IU8EWrAFP0u25tTJZqi-TkZsqmMD0MpCsRCLbDLx5ZY/%3Fsize%3D512/https/cdn.discordapp.com/banners/1512138928117780605/d7676dfceb79cafd6ba0ba7bebc9d7d0.png?format=webp&quality=lossless&width=563&height=223" alt="BladeBets Banner" class="hero-banner-img">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASINOS PARTNERED SECTION -->
+  <section id="casinos" class="casinos">
+    <div class="container">
+      <h2 class="section-title reveal">PARTNERED <span>CASINOS</span></h2>
+      <p class="section-subtitle reveal">Play with code BLADE to instantly enter all active giveaways.</p>
+
+      <div class="casinos-grid">
+        <!-- RAIN.GG CARD -->
+        <div class="casino-card glass-card reveal">
+          <img src="https://media.discordapp.net/attachments/1527610450194206824/1527621042607095901/blade_.png?ex=6a633c76&is=6a61eaf6&hm=48ee1afdf75f684ec2b96d19eb54411da0f81a354fc8568af96e06cd680be8ee&=&format=webp&quality=lossless&width=311&height=385" alt="Rain.gg Banner" class="casino-banner-img">
+          <div>
+            <h3>Rain.gg</h3>
+            <p style="color: var(--text-gray);">3 Free Cases + 5% Deposit Bonus with Code: <strong>BLADE</strong></p>
+          </div>
+          <a href="https://rain.gg/r/BLADE" target="_blank" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> Play on Rain.gg</a>
+        </div>
+
+        <!-- BETDICE CARD -->
+        <div class="casino-card glass-card reveal">
+          <img src="https://media.discordapp.net/attachments/1524530546741346344/1529106058315042926/6b-BLADE.png?ex=6a62b4bd&is=6a61633d&hm=af7ae6948155810c6bc8d9ccb27327cf01542fe3c6ab5d35a14ddfba70cccc0c&=&format=webp&quality=lossless&width=590&height=886" alt="BetDice Banner" class="casino-banner-img">
+          <div>
+            <h3>BetDice</h3>
+            <p style="color: var(--text-gray);">5% to 10% Deposit Bonus on $100+ deposits.</p>
+          </div>
+          <a href="https://betdice.click/r/BLADE" target="_blank" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> Play on BetDice</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BONUSES & REWARDS SECTION -->
+  <section id="bonuses" class="bonuses">
+    <div class="container">
+      <h2 class="section-title reveal">BONUSES & <span>REWARDS</span></h2>
+      <p class="section-subtitle reveal">Exclusive deposit bonuses, free cases, and wager milestones for using code BLADE.</p>
+
+      <div class="bonuses-grid">
+        <!-- RAIN.GG BONUS CARD -->
+        <div class="bonus-card glass-card reveal">
+          <div>
+            <h3><i class="fa-solid fa-gift"></i> RAIN.GG BONUSES</h3>
+            <ul class="bonus-list">
+              <li>
+                <strong><i class="fa-solid fa-box-open" style="color:var(--primary-gold);"></i> 3 FREE CASES</strong><br>
+                Use code <strong>BLADE</strong> to unlock 3 free cases and start opening rewards.
+              </li>
+              <li>
+                <strong><i class="fa-solid fa-percent" style="color:var(--primary-gold);"></i> 5% DEPOSIT BONUS</strong><br>
+                Receive an instant 5% bonus on your first deposit.
+              </li>
+            </ul>
+          </div>
+          <a href="https://rain.gg/r/BLADE" target="_blank" class="btn btn-secondary" style="width:100%;"><i class="fas fa-gift"></i> Claim Rain Bonus</a>
+        </div>
+
+        <!-- BETDICE OFFERS CARD -->
+        <div class="bonus-card glass-card reveal">
+          <div>
+            <h3><i class="fa-solid fa-coins"></i> BETDICE OFFERS</h3>
+            <ul class="bonus-list">
+              <li>
+                <strong><i class="fa-solid fa-money-bill-trend-up" style="color:var(--primary-gold);"></i> 5% TO 10% DEPOSIT BONUS</strong><br>
+                Boost your balance on every eligible deposit using Code: <strong>BLADE</strong>
+              </li>
+              <li><strong>Minimum Deposit:</strong> $100</li>
+              <li><strong>Maximum Deposit:</strong> $500</li>
+            </ul>
+          </div>
+          <a href="https://betdice.click/r/BLADE" target="_blank" class="btn btn-primary" style="width:100%;"><i class="fas fa-user-plus"></i> Direct Sign Up Link</a>
+        </div>
+      </div>
+
+      <!-- BETDICE WAGER MILESTONES -->
+      <div class="wager-milestones-container glass-card reveal">
+        <h3 style="font-size: 2.2rem; text-align: center;"><i class="fa-solid fa-trophy" style="color:var(--primary-gold);"></i> BETDICE WAGER MILESTONES</h3>
+        <p style="text-align: center; color: var(--text-gray);">Hit wager thresholds to earn extra cash rewards!</p>
+
+        <div class="wager-milestones-grid">
+          <div class="milestone-box">
+            <div class="milestone-wager">$500 Wager</div>
+            <div class="milestone-prize">$2.5 Prize</div>
+          </div>
+          <div class="milestone-box">
+            <div class="milestone-wager">$1,000 Wager</div>
+            <div class="milestone-prize">$5 Prize</div>
+          </div>
+          <div class="milestone-box">
+            <div class="milestone-wager">$2,500 Wager</div>
+            <div class="milestone-prize">$10 Prize</div>
+          </div>
+          <div class="milestone-box">
+            <div class="milestone-wager">$5,000 Wager</div>
+            <div class="milestone-prize">$15 – $20 Prize</div>
+          </div>
+          <div class="milestone-box">
+            <div class="milestone-wager">$10,000 Wager</div>
+            <div class="milestone-prize">$30 – $40 Prize</div>
+          </div>
+        </div>
+
+        <div class="disclaimer-box">
+          <i class="fa-solid fa-circle-info" style="color: var(--primary-gold);"></i> <strong>Important Note:</strong> If you rank on the weekly leaderboard with this wager amount, you will only receive the main Leaderboard Prize (milestone rewards and leaderboard prizes do not combine).
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD SECTION -->
+  <section id="leaderboards" class="leaderboards">
+    <div class="container">
+      <h2 class="section-title reveal">BETDICE LIVE <span>LEADERBOARD</span></h2>
+      <p class="section-subtitle reveal">BladeBets Weekly Wager Leaderboard (Code: BLADE)</p>
+
+      <div class="leaderboard-banner-box reveal">
+        <img src="https://media.discordapp.net/attachments/1524530546741346344/1529106057278783598/6a-BLADE.png?ex=6a62b4bd&is=6a61633d&hm=b1658fd2ee166e9848e186c45aa0f90058f53c61e30938d37855090da7ee8db5&=&format=webp&quality=lossless&width=1433&height=263" alt="BetDice Leaderboard Banner" class="leaderboard-banner-img">
+      </div>
+
+      <!-- 5-DAY TIMER BOX -->
+      <div class="timer-container reveal">
+        <div class="timer-title">
+          <i class="fa-solid fa-stopwatch fa-spin-pulse"></i> LEADERBOARD ENDS IN:
+        </div>
+        <div class="timer-boxes">
+          <div class="timer-unit">
+            <div class="num" id="days">05</div>
+            <div class="label">Days</div>
+          </div>
+          <div class="timer-unit">
+            <div class="num" id="hours">00</div>
+            <div class="label">Hours</div>
+          </div>
+          <div class="timer-unit">
+            <div class="num" id="minutes">00</div>
+            <div class="label">Mins</div>
+          </div>
+          <div class="timer-unit">
+            <div class="num" id="seconds">00</div>
+            <div class="label">Secs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="leaderboard-controls reveal">
+        <div class="single-tab">
+          <i class="fa-solid fa-dice"></i> BetDice Active Weekly
+        </div>
+
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search username..." onkeyup="filterLeaderboard()" />
+        </div>
+      </div>
+
+      <div class="table-container glass-card reveal">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>User</th>
+              <th>Wagered Amount</th>
+              <th>Prize</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody">
+            <tr>
+              <td colspan="4" style="text-align:center; padding: 40px; color: var(--text-gray);">
+                <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary-gold);"></i><br><br>
+                Fetching Live Leaderboard Data...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT & STATS SECTION -->
+  <section id="about" class="about">
+    <div class="container">
+      <h2 class="section-title reveal">ABOUT <span>BLADEBETS</span></h2>
+      <p class="section-subtitle reveal" style="max-width: 620px; margin-left: auto; margin-right: auto;">
+        BladeBets is a content creator broadcasting live on Kick. Bringing high energy, community giveaways, and non-stop entertainment. Use code <strong>BLADE</strong> across partnered platforms to support the channel and claim your rewards.
+      </p>
+
+      <div class="stats-grid">
+        <div class="stat-card glass-card reveal">
+          <i class="fas fa-users"></i>
+          <div class="stat-number" data-target="2000">0</div>
+          <div class="stat-label">Community Members</div>
+        </div>
+        <div class="stat-card glass-card reveal">
+          <i class="fas fa-dollar-sign"></i>
+          <div class="stat-number" data-target="2740">0</div>
+          <div class="stat-label">Prizes Awarded ($)</div>
+        </div>
+        <div class="stat-card glass-card reveal">
+          <i class="fas fa-video"></i>
+          <div class="stat-number" data-target="132">0</div>
+          <div class="stat-label">Hours Streamed</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT & COMMUNITY SECTION -->
+  <section id="contact" class="contact">
+    <div class="container">
+      <h2 class="section-title reveal">CONNECT <span>WITH US</span></h2>
+      <p class="section-subtitle reveal">Have questions regarding rewards or support? Reach out directly on our official channels.</p>
+
+      <div class="contact-grid">
+        <div class="contact-card glass-card reveal">
+          <i class="fab fa-discord"></i>
+          <h3>Discord</h3>
+          <p style="color: var(--text-gray); font-size: 0.9rem;">Join the community or DM</p>
+          <span>thebladebets</span>
+        </div>
+
+        <a href="https://t.me/TheBladeBets" target="_blank" class="contact-card glass-card reveal">
+          <i class="fab fa-telegram"></i>
+          <h3>Telegram</h3>
+          <p style="color: var(--text-gray); font-size: 0.9rem;">Direct Message / Channel</p>
+          <span>TheBladeBets</span>
+        </a>
+
+        <a href="mailto:thebladebets@gmail.com" class="contact-card glass-card reveal">
+          <i class="fas fa-envelope"></i>
+          <h3>Email</h3>
+          <p style="color: var(--text-gray); font-size: 0.9rem;">Business & Reward Inquiries</p>
+          <span>thebladebets@gmail.com</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <a href="#" class="logo-container" style="justify-content:center;">
+          <img src="https://images-ext-1.discordapp.net/external/pp68phiyB4pMv-hl2GXxL8W8bp2ojKrhCLF-hsdLWEs/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1512138928117780605/51e35d96bdbc2da3b53fb6c102647f67.png?format=webp&quality=lossless&width=282&height=282" alt="BladeBets Logo" class="logo-img" />
+          <div class="logo-text">BLADE<span>BETS</span></div>
+        </a>
+        <div class="social-links">
+          <a href="https://kick.com/bladebets" target="_blank" class="social-icon" title="Kick"><i class="fa-solid fa-play"></i></a>
+          <a href="https://discord.gg/mnvyk3adeD" target="_blank" class="social-icon" title="Discord"><i class="fab fa-discord"></i></a>
+          <a href="https://t.me/TheBladeBets" target="_blank" class="social-icon" title="Telegram"><i class="fab fa-telegram"></i></a>
+        </div>
+      </div>
+
+      <!-- ATTRACTIVE 18+ RESPONSIBLE GAMBLING DISCLAIMER BOX -->
+      <div class="gambling-warning-box">
+        <div class="badge-18-glow">18+</div>
+        <div class="gambling-warning-title">
+          <i class="fa-solid fa-triangle-exclamation"></i> Responsible Gambling Disclaimer
+        </div>
+        <p class="gambling-warning-text">
+          Gambling involves high financial risk and can be addictive. Please gamble responsibly and only wager what you can afford to lose. This website contains affiliate referral links and is designed strictly for entertainment purposes for users aged 18 years or older (or legal gambling age in your jurisdiction). If you or someone you know is struggling with gambling addiction, please reach out for professional help immediately.
+        </p>
+        <div class="gambling-links">
+          <a href="https://www.begambleaware.org" target="_blank" rel="noopener noreferrer" class="gambling-link-btn">
+            <i class="fa-solid fa-shield-halved"></i> BeGambleAware.org
+          </a>
+          <a href="https://www.gamblingtherapy.org" target="_blank" rel="noopener noreferrer" class="gambling-link-btn">
+            <i class="fa-solid fa-heart-pulse"></i> GamblingTherapy.org
+          </a>
+          <a href="https://www.ncpgambling.org" target="_blank" rel="noopener noreferrer" class="gambling-link-btn">
+            <i class="fa-solid fa-hand-holding-hand"></i> NCPG Helpline
+          </a>
+        </div>
+      </div>
+
+      <div class="copyright">
+        &copy; 2026 BladeBets. All rights reserved. Play Responsibly. Code: <strong>BLADE</strong>.
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT & ENHANCED ANIMATED SCATTER CANVAS & DIRECT LEADERBOARD FETCH -->
+  <script>
+    const DIRECT_API_URL = 'https://api.betdice.net/api/v1/leaderboards/current';
+    const FALLBACK_WORKER_URL = 'https://fragrant-resonance-245f.snapyxd99.workers.dev';
+    const API_KEY = 'bdp_1mWUE6Tl2pE4o4GA-Ycvz-XpqjpCq_6McXG0cNWS2Gs';
+
+    let liveLeaderboardData = [];
+
+    // Mobile Navbar Navigation Toggle
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.getElementById('navLinks');
+    hamburger.addEventListener('click', () => { navLinks.classList.toggle('active'); });
+
+    // 5-DAY TIMER LOGIC
+    let countdownTime = (5 * 24 * 60 * 60); // 5 Days in seconds
+    const daysEl = document.getElementById('days');
+    const hoursEl = document.getElementById('hours');
+    const minsEl = document.getElementById('minutes');
+    const secsEl = document.getElementById('seconds');
+
+    function updateTimer() {
+      if (countdownTime <= 0) {
+        daysEl.innerText = "00";
+        hoursEl.innerText = "00";
+        minsEl.innerText = "00";
+        secsEl.innerText = "00";
+        return;
+      }
+      const d = Math.floor(countdownTime / (3600 * 24));
+      const h = Math.floor((countdownTime % (3600 * 24)) / 3600);
+      const m = Math.floor((countdownTime % 3600) / 60);
+      const s = Math.floor(countdownTime % 60);
+
+      daysEl.innerText = d < 10 ? '0' + d : d;
+      hoursEl.innerText = h < 10 ? '0' + h : h;
+      minsEl.innerText = m < 10 ? '0' + m : m;
+      secsEl.innerText = s < 10 ? '0' + s : s;
+
+      countdownTime--;
+    }
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    /* ========================================================
+       SLOT & CANDY SCATTER SYMBOLS ANIMATED CANVAS (ENHANCED)
+       ======================================================== */
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let scatters = [];
+    let mouse = { x: -1000, y: -1000 };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+    resizeCanvas();
+
+    // Candy & Slot symbols for background scatter
+    const slotSymbols = [
+      { text: '🍭' }, // Sweet Bonanza Lollipop Scatter
+      { text: '🍬' }, // Blue Candy
+      { text: '🍇' }, // Grapes
+      { text: '🍉' }, // Watermelon
+      { text: '💎' }, // Diamond
+      { text: '⭐' }, // Gold Star
+      { text: '7️⃣' }, // Slot 7
+      { text: '🍒' }, // Cherry
+      { text: '🔔' }  // Slot Bell
+    ];
+
+    class ScatterItem {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        const sym = slotSymbols[Math.floor(Math.random() * slotSymbols.length)];
+        this.symbol = sym.text;
+        
+        // BADA SIZE: 28px se 56px tak
+        this.baseSize = Math.random() * 28 + 28;
+        this.size = this.baseSize;
+        
+        this.speedX = (Math.random() - 0.5) * 0.8;
+        this.speedY = (Math.random() - 0.5) * 0.8;
+        
+        // Pulse & Glow Animation variables
+        this.alpha = Math.random() * 0.4 + 0.2; 
+        this.pulseAngle = Math.random() * Math.PI * 2;
+        this.pulseSpeed = Math.random() * 0.03 + 0.01;
+        
+        // Rotation
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.03;
+        
+        // Floating Sine Wobble
+        this.wobbleAngle = Math.random() * Math.PI * 2;
+        this.wobbleSpeed = Math.random() * 0.02 + 0.01;
+      }
+
+      update() {
+        // Linear movement & Sine Wobble
+        this.wobbleAngle += this.wobbleSpeed;
+        this.x += this.speedX + Math.sin(this.wobbleAngle) * 0.4;
+        this.y += this.speedY + Math.cos(this.wobbleAngle) * 0.4;
+
+        // Continuous Rotation
+        this.rotation += this.rotSpeed;
+
+        // Glow/Alpha Pulse
+        this.pulseAngle += this.pulseSpeed;
+        this.alpha = 0.25 + Math.sin(this.pulseAngle) * 0.15;
+
+        // Subtle Mouse Dodge interaction
+        const dx = this.x - mouse.x;
+        const dy = this.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          const angle = Math.atan2(dy, dx);
+          this.x += Math.cos(angle) * 1.5;
+          this.y += Math.sin(angle) * 1.5;
+        }
+
+        // Screen Loop Bounds
+        if (this.x < -60) this.x = canvas.width + 60;
+        if (this.x > canvas.width + 60) this.x = -60;
+        if (this.y < -60) this.y = canvas.height + 60;
+        if (this.y > canvas.height + 60) this.y = -60;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0.1, Math.min(0.65, this.alpha));
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        
+        // Glow effect around large scatters
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(255, 208, 0, 0.3)';
+
+        ctx.font = `${this.size}px "Segoe UI Emoji", "Apple Color Emoji", Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.symbol, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    function initScatters() {
+      scatters = [];
+      // Adjust density for larger scatters
+      const count = Math.floor((window.innerWidth * window.innerHeight) / 25000);
+      const finalCount = Math.max(22, Math.min(50, count));
+      for (let i = 0; i < finalCount; i++) {
+        scatters.push(new ScatterItem());
+      }
+    }
+
+    function animateScatters() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      scatters.forEach(s => {
+        s.update();
+        s.draw();
+      });
+      requestAnimationFrame(animateScatters);
+    }
+    initScatters();
+    animateScatters();
+
+    /* ========================================================
+       FETCH BETDICE LEADERBOARD API
+       ======================================================== */
+    function findArrayInResponse(obj) {
+      if (!obj) return [];
+      if (Array.isArray(obj)) return obj;
+      if (typeof obj === 'object') {
+        const priorityKeys = ['players', 'leaderboard', 'data', 'users', 'rankings', 'list', 'result'];
+        for (let key of priorityKeys) {
+          if (Array.isArray(obj[key])) return obj[key];
+          if (obj[key] && typeof obj[key] === 'object') {
+            const nested = findArrayInResponse(obj[key]);
+            if (nested.length > 0) return nested;
+          }
+        }
+        for (let key in obj) {
+          if (Array.isArray(obj[key])) return obj[key];
+        }
+      }
+      return [];
+    }
+
+    async function fetchBetDiceLeaderboard() {
+      const tbody = document.getElementById('leaderboardBody');
+      let rawResult = null;
+      
+      // Attempt 1: Fetch directly from BetDice API
+      try {
+        const response = await fetch(DIRECT_API_URL, {
+          method: 'GET',
+          headers: {
+            'x-api-key': API_KEY,
+            'Accept': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          rawResult = await response.json();
+        } else {
+          throw new Error(`Direct API HTTP Status: ${response.status}`);
+        }
+      } catch (err) {
+        console.warn('Direct API call blocked or failed, switching to proxy worker fallback...', err);
+        // Attempt 2: Fallback to Snapy Cloudflare Worker Proxy
+        try {
+          const fallbackResp = await fetch(FALLBACK_WORKER_URL, {
+            method: 'GET',
+            headers: {
+              'x-api-key': API_KEY,
+              'Accept': 'application/json'
+            }
+          });
+          if (fallbackResp.ok) {
+            rawResult = await fallbackResp.json();
+          } else {
+            throw new Error(`Fallback HTTP Status: ${fallbackResp.status}`);
+          }
+        } catch (fallbackErr) {
+          console.error('All fetch attempts failed:', fallbackErr);
+        }
+      }
+
+      if (!rawResult) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" style="text-align:center; padding:35px; color: #ff6b81;">
+              <i class="fas fa-exclamation-triangle"></i> Unable to load live leaderboard data right now.
+            </td>
+          </tr>`;
+        return;
+      }
+
+      const players = findArrayInResponse(rawResult);
+
+      liveLeaderboardData = players.map((player, index) => {
+        const rank = player.position || player.rank || player.place || (index + 1);
+        const user = player.username || player.user || player.name || player.profile?.username || 'Anonymous';
+        
+        const rawWager = player.wager !== undefined ? player.wager : (player.wagered !== undefined ? player.wagered : (player.amount !== undefined ? player.amount : 0));
+        const numWager = parseFloat(rawWager) || 0;
+
+        const rawPrize = player.prize !== undefined ? player.prize : (player.reward !== undefined ? player.reward : 0);
+        const numPrize = parseFloat(rawPrize) || 0;
+
+        return {
+          rank: Number(rank),
+          user: user,
+          metric: `$${numWager.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          prize: numPrize > 0 ? `$${numPrize.toLocaleString('en-US')}` : '-'
+        };
+      });
+
+      if (liveLeaderboardData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color: var(--text-gray);">No players found in this leaderboard.</td></tr>`;
+        return;
+      }
+
+      renderLeaderboard(liveLeaderboardData);
+    }
+
+    function renderLeaderboard(data) {
+      const tableBody = document.getElementById('leaderboardBody');
+      tableBody.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-gray); padding: 30px;">No user found.</td></tr>`;
+        return;
+      }
+
+      data.forEach(item => {
+        let rankClass = 'rank-other';
+        let crownIcon = item.rank;
+
+        if (item.rank === 1) { rankClass = 'rank-1'; crownIcon = '<i class="fas fa-crown"></i>'; }
+        else if (item.rank === 2) { rankClass = 'rank-2'; crownIcon = '<i class="fas fa-medal"></i>'; }
+        else if (item.rank === 3) { rankClass = 'rank-3'; crownIcon = '<i class="fas fa-award"></i>'; }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <div class="rank ${rankClass}">${crownIcon}</div>
+          </td>
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar">${escapeHtml(String(item.user).charAt(0).toUpperCase())}</div>
+              <span>${escapeHtml(item.user)}</span>
+            </div>
+          </td>
+          <td class="amount">${escapeHtml(item.metric)}</td>
+          <td><span class="prize-tag">${escapeHtml(item.prize)}</span></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function filterLeaderboard() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = liveLeaderboardData.filter(item => 
+        String(item.user).toLowerCase().includes(query)
+      );
+      renderLeaderboard(filtered);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // COUNTER ANIMATIONS
+    let countersAnimated = false;
+    function animateCounters() {
+      const counters = document.querySelectorAll('.stat-number');
+      const speed = 80;
+
+      counters.forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+        let count = 0;
+        const inc = target / speed;
+
+        const updateCount = () => {
+          count += inc;
+          if (count < target) {
+            counter.innerText = Math.ceil(count).toLocaleString();
+            setTimeout(updateCount, 20);
+          } else {
+            counter.innerText = target.toLocaleString() + '+';
+          }
+        };
+        updateCount();
+      });
+    }
+
+    // SCROLL REVEAL ANIMATIONS
+    function handleScrollAnimations() {
+      const reveals = document.querySelectorAll('.reveal');
+      const windowHeight = window.innerHeight;
+
+      reveals.forEach(el => {
+        const elementTop = el.getBoundingClientRect().top;
+        if (elementTop < windowHeight - 80) {
+          el.classList.add('active');
+        }
+      });
+
+      const statsSection = document.querySelector('.stats-grid');
+      if (statsSection) {
+        const statsPos = statsSection.getBoundingClientRect().top;
+        if (statsPos < windowHeight - 80 && !countersAnimated) {
+          countersAnimated = true;
+          animateCounters();
+        }
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchBetDiceLeaderboard();
+      handleScrollAnimations();
+    });
+
+    window.addEventListener('scroll', handleScrollAnimations);
+  </script>
+</body>
+</html>
