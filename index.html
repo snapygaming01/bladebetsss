@@ -279,6 +279,28 @@
       border: 1px solid var(--glass-border); word-break: break-all;
     }
 
+
+    /* LEADERBOARD */
+    .lb-meta { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:20px; color:var(--text-gray); font-size:0.9rem; }
+    .lb-meta strong { color:var(--primary-gold); }
+    .lb-podium { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; align-items:end; }
+    .lb-pod { padding:22px 14px; text-align:center; }
+    .lb-pod.p1 { order:2; padding-top:34px; padding-bottom:34px; border-color:var(--primary-gold); box-shadow:0 0 30px var(--primary-gold-glow); }
+    .lb-pod.p2 { order:1; } .lb-pod.p3 { order:3; }
+    .lb-pod i { font-size:2rem; color:var(--primary-gold); }
+    .lb-pod .lb-name { font-family:var(--font-heading); font-size:1.8rem; margin:6px 0 2px; word-break:break-all; }
+    .lb-pod .lb-wager { color:var(--text-gray); font-size:0.9rem; }
+    .lb-pod .lb-prize { margin-top:8px; display:inline-block; padding:4px 14px; border-radius:20px; font-weight:800; color:#000; background:linear-gradient(135deg,#FFDE59,var(--primary-gold)); }
+    .lb-table-wrap { overflow-x:auto; }
+    .lb-table { width:100%; border-collapse:collapse; }
+    .lb-table th { text-align:left; font-size:0.8rem; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-gray); padding:14px 18px; border-bottom:1px solid var(--glass-border); }
+    .lb-table td { padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.06); font-weight:600; }
+    .lb-table tr:hover td { background:rgba(255,208,0,0.06); }
+    .lb-rank { color:var(--primary-gold); font-family:var(--font-heading); font-size:1.4rem; }
+    .lb-state { padding:50px 20px; text-align:center; color:var(--text-gray); }
+    .lb-state i { font-size:2.2rem; color:var(--primary-gold); margin-bottom:10px; display:block; }
+    @media (max-width:768px){ .lb-podium{ grid-template-columns:1fr; } .lb-pod.p1,.lb-pod.p2,.lb-pod.p3{ order:initial; } }
+
     /* FOOTER */
     footer {
       background: #060609; border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -431,12 +453,19 @@
       <h2 class="section-title">COMMUNITY <span>LEADERBOARD</span></h2>
       <p class="section-subtitle">Compete and win exclusive rewards!</p>
 
-      <div class="glass-card soon-box">
-        <i class="fa-solid fa-trophy" style="font-size: 3.5rem; color: var(--primary-gold); margin-bottom: 15px;"></i>
-        <h3 style="font-size: 3rem; color: #fff; margin-bottom: 10px;">LEADERBOARD <span>SOON!</span></h3>
-        <p style="color: var(--text-gray); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
-          Our next official leaderboard competition will launch soon. Keep following our socials to stay updated!
-        </p>
+      <div class="lb-meta">
+        <div><i class="fa-solid fa-calendar-days"></i> Period: <strong id="lbPeriod">--</strong></div>
+        <div><i class="fa-solid fa-clock-rotate-left"></i> Updated: <span id="lbUpdated">--</span></div>
+      </div>
+
+      <div id="lbPodium" class="lb-podium"></div>
+
+      <div class="glass-card lb-table-wrap">
+        <div id="lbState" class="lb-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading leaderboard...</div>
+        <table class="lb-table" id="lbTable" style="display:none;">
+          <thead><tr><th>Rank</th><th>Player</th><th>Wagered</th><th>Prize</th></tr></thead>
+          <tbody id="lbBody"></tbody>
+        </table>
       </div>
 
       <div class="section-next-cta glass-card">
@@ -613,6 +642,71 @@
 
     window.addEventListener('load', () => {
       setTimeout(hidePreloader, 1000);
+    });
+
+    /* LEADERBOARD */
+    // Token is NOT stored here (it would be public). The proxy in worker.js holds it.
+    const LEADERBOARD_API_URL = '/api/leaderboard'; // change to your Worker URL if hosted separately
+    const LB_PRIZES = ['$500', '$250', '$100', '$50', '$25', '$15', '$10', '$5', '$5', '$5']; // edit freely
+
+    function lbMask(name) {
+      name = String(name || 'Anonymous');
+      return name.length <= 3 ? name[0] + '***' : name.slice(0, 2) + '***' + name.slice(-1);
+    }
+    function lbMoney(n) {
+      return '$' + Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+    function lbEsc(t) {
+      const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
+    }
+
+    async function loadLeaderboard() {
+      const state = document.getElementById('lbState');
+      try {
+        const res = await fetch(LEADERBOARD_API_URL, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const list = (Array.isArray(data) ? data : (data.data || data.players || []))
+          .map(p => ({ name: p.username || p.name, wager: Number(p.weightedWagered ?? p.wagered ?? 0) }))
+          .filter(p => p.wager > 0)
+          .sort((a, b) => b.wager - a.wager)
+          .slice(0, 10);
+
+        if (data.period) document.getElementById('lbPeriod').textContent = data.period;
+        document.getElementById('lbUpdated').textContent = new Date().toLocaleTimeString();
+
+        if (!list.length) {
+          state.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> No wagers yet this period. Be the first!';
+          return;
+        }
+
+        document.getElementById('lbPodium').innerHTML = list.slice(0, 3).map((p, i) => `
+          <div class="glass-card lb-pod p${i + 1}">
+            <i class="fa-solid fa-crown"></i>
+            <div class="lb-name">#${i + 1} ${lbEsc(lbMask(p.name))}</div>
+            <div class="lb-wager">${lbMoney(p.wager)} wagered</div>
+            <div class="lb-prize">${LB_PRIZES[i]}</div>
+          </div>`).join('');
+
+        document.getElementById('lbBody').innerHTML = list.map((p, i) => `
+          <tr>
+            <td class="lb-rank">#${i + 1}</td>
+            <td>${lbEsc(lbMask(p.name))}</td>
+            <td>${lbMoney(p.wager)}</td>
+            <td>${LB_PRIZES[i] || '-'}</td>
+          </tr>`).join('');
+
+        state.style.display = 'none';
+        document.getElementById('lbTable').style.display = 'table';
+      } catch (err) {
+        console.error('Leaderboard error:', err);
+        state.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Could not load leaderboard. Please try again later.';
+      }
+    }
+
+    window.addEventListener('load', () => {
+      loadLeaderboard();
+      setInterval(loadLeaderboard, 5 * 60 * 1000);
     });
   </script>
 </body>
